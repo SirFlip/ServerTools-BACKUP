@@ -21,7 +21,7 @@ def version_build = 'UNKNOWN'
 if (System.getenv('BUILD_NUMBER') != null)
     version_build = System.getenv('BUILD_NUMBER')
 
-version += ".${version_build}"
+version = "${minecraft_version}-${mod_version}.${version_build}"
 
 group = 'info.servertools.backup'
 archivesBaseName = 'ServerTools-BACKUP'
