@@ -1,89 +1,71 @@
-/* Constants Start */
-
-def versionMajor = 2
-def versionMinor = 1
-def versionRev = 0
-def versionBuild = 0
-
-def minecraftVersion = '1.7.10'
-def forgeVersion = '10.13.0.1160'
-def STCoreVersion = '2.1.0.29'
-
-/* Constantes End */
-
 buildscript {
     repositories {
         mavenCentral()
+        jcenter()
         maven { url = "http://files.minecraftforge.net/maven" }
         maven { url = "https://oss.sonatype.org/content/repositories/snapshots/" }
     }
-    dependencies { classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT' }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
+        classpath 'org.ajoberstar:gradle-git:0.10.1'
+        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0'
+    }
 }
-
-if (System.getenv('BUILD_NUMBER') != null)
-    versionBuild = System.getenv('BUILD_NUMBER')
-
-version = "${minecraftVersion}-${versionMajor}.${versionMinor}.${versionRev}.${versionBuild}"
-def actualVersion = "${versionMajor}.${versionMinor}.${versionRev}.${versionBuild}"
 
 apply plugin: 'forge'
 apply plugin: 'maven-publish'
 apply plugin: 'curseforge'
+apply plugin: 'license'
 
-group = 'com.matthewprenger.servertools.backup'
+def version_build = 'UNKNOWN'
+if (System.getenv('BUILD_NUMBER') != null)
+    version_build = System.getenv('BUILD_NUMBER')
+
+version += ".${version_build}"
+
+group = 'info.servertools.backup'
 archivesBaseName = 'ServerTools-BACKUP'
 
-minecraft {
-    version = minecraftVersion + '-' + forgeVersion
-    assetDir = 'run/assets'
+import org.ajoberstar.grgit.Grgit
 
-    replace '@VERSION_MAJOR@', versionMajor
-    replace '@VERSION_MINOR@', versionMinor
-    replace '@VERSION_REV@', versionRev
-    replace '@VERSION_BUILD@', versionBuild
-    replace '@MCVERSION@', minecraftVersion
-    replace '@MIN_CORE@', STCoreVersion
-
-    if (project.hasProperty('st_keystore_cf'))
-        replace '@FINGERPRINT@', project.st_keystore_cf
+def gitHash = null
+if (new File(projectDir, '.git').exists()) {
+    def repo = Grgit.open(project.file('.'))
+    gitHash = repo.log().find().abbreviatedId
 }
 
-curse {
-    dependsOn 'changeLog', 'reobf'
-    onlyIf { return project.hasProperty('curseforge_key') }
-
-    if (project.hasProperty('curseforge_key')) apiKey = project.curseforge_key
-    projectId = '220713'
-    changelog = ''
-    releaseType = 'release'
+minecraft {
+    version = minecraft_version + '-' + forge_version
+    runDir = 'run'
+    mappings = project.mappings_version
 }
 
 repositories {
-    mavenCentral()
-    maven { url = 'http://maven.matthewprenger.com' }
+    maven { url 'http://maven.matthewprenger.com/' }
 }
 
 dependencies {
-    compile "com.matthewprenger.servertools.core:ServerTools-CORE:${minecraftVersion}-${STCoreVersion}:deobf"
+    compile "info.servertools.core:ServerTools-CORE:${st_core_version}:deobf"
+
+    testCompile 'junit:junit:4.11'
+    testCompile 'org.hamcrest:hamcrest-library:1.3'
+    testCompile 'org.mockito:mockito-core:1.9.0'
 }
 
 sourceCompatibility = '1.7'
 targetCompatibility = '1.7'
 
-jar.manifest {
-    attributes 'Specification-Version': actualVersion
-    attributes 'Specification-Title': project.name
-}
-
 processResources {
-    inputs.property "version", actualVersion
-    inputs.property "mcversion", minecraftVersion
+    inputs.property "version", project.version
+    inputs.property "mcversion", minecraft_version
+
+    from 'LICENSE.txt'
 
     from(sourceSets.main.resources.srcDirs) {
         include '**/*.info'
         include '**/*.properties'
 
-        expand 'version':actualVersion, 'mcversion': minecraftVersion
+        expand 'version': project.version, 'mcversion': minecraft_version
     }
 
     from(sourceSets.main.resources.srcDirs) {
@@ -91,6 +73,30 @@ processResources {
         exclude '**/*.properties'
     }
 }
+jar {
+    manifest.mainAttributes(
+            "Built-By": System.getProperty('user.name'),
+            "Created-By": "${System.getProperty('java.vm.version')} + (${System.getProperty('java.vm.vendor')})",
+            "Implementation-Title": project.name,
+            "Implementation-Version": project.version,
+            "Git-Hash": gitHash
+    )
+}
+
+license {
+    ext.name = project.name
+    ext.organization = project.organization
+    ext.url = project.url
+    ext.year = project.inceptionYear
+    exclude '**/*.info'
+    exclude '**/*.json'
+    header new File(projectDir, 'HEADER.txt')
+    sourceSets = project.sourceSets
+    ignoreFailures = false
+    strictCheck = true
+    mapping { java = 'SLASHSTAR_STYLE' }
+}
+
 
 task sourceJar(type: Jar) {
     from sourceSets.main.allSource
@@ -109,6 +115,10 @@ task deobfJar(type: Jar) {
 
 tasks.build.dependsOn sourceJar, javadocJar, deobfJar
 
+tasks.withType(JavaCompile) { task ->
+    task.options.encoding = 'UTF-8'
+}
+
 publishing {
     tasks.publish.dependsOn 'build'
     publications {
@@ -118,55 +128,23 @@ publishing {
             artifact sourceJar
             artifact javadocJar
             artifact deobfJar
-
-            artifact source: file("build/distributions/${project.getName()}-${project.version}-changelog.txt"), classifier: 'changelog'
         }
     }
 
     repositories {
         if (project.hasProperty('mavendir')) {
-            maven {
-                url mavendir
-            }
+            maven { url mavendir }
         }
     }
 }
 
-import net.minecraftforge.gradle.tasks.dev.ChangelogTask
-import net.minecraftforge.gradle.delayed.DelayedString
-import net.minecraftforge.gradle.delayed.DelayedFile
+curse {
+    dependsOn 'reobf'
+    onlyIf { return project.hasProperty('curseforge_key') }
 
-task changeLog(type: ChangelogTask) {
-    onlyIf {project.hasProperty('jenkins_user')}
-    if(project.hasProperty('jenkins_user')) {
-
-        def jobName = "${System.getenv().JOB_NAME}"
-        def buildNumber = "${System.getenv().BUILD_NUMBER}"
-
-        setServerRoot(new DelayedString(project, 'http://direct.matthewprenger.com:8080/'))
-        setJobName(new DelayedString(project, jobName.toString()))
-        setAuthName(new DelayedString(project, project.jenkins_user))
-        setAuthPassword(new DelayedString(project, project.jenkins_pass))
-        setTargetBuild({ buildNumber.toString() })
-        setOutput(new DelayedFile(project, 'build/distributions/' + project.getName() + '-' + project.version + '-changelog.txt'))
-    }
+    if (project.hasProperty('curseforge_key')) apiKey = project.curseforge_key
+    projectId = '64744'
+    changelog = ''
+    releaseType = 'release'
 }
-tasks.build.dependsOn('changeLog')
-
-task signJar(dependsOn: 'reobf') {
-    onlyIf { return project.hasProperty('st_keystore') }
-
-    doLast {
-        ant.signjar(
-                destDir: jar.destinationDir,
-                jar: jar.getArchivePath(),
-                alias: project.st_keystore_alias,
-                keystore: project.st_keystore,
-                storepass: project.st_keystore_pass,
-                preservelastmodified: 'true'
-        )
-    }
-}
-tasks.build.dependsOn 'signJar'
-
-task release(dependsOn: [build, signJar, publish, curse])
+tasks.curse.mustRunAfter('publish')

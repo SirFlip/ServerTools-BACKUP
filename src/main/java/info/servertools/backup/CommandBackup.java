@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Matthew Prenger
+ * Copyright 2014 ServerTools
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package info.servertools.backup;
 
-package com.matthewprenger.servertools.backup;
-
-import com.matthewprenger.servertools.core.command.CommandLevel;
-import com.matthewprenger.servertools.core.command.ServerToolsCommand;
-import com.matthewprenger.servertools.core.util.Util;
+import info.servertools.core.command.CommandLevel;
+import info.servertools.core.command.ServerToolsCommand;
+import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
-import net.minecraft.util.EnumChatFormatting;
-
-import java.io.IOException;
 
 public class CommandBackup extends ServerToolsCommand {
 
@@ -36,20 +32,12 @@ public class CommandBackup extends ServerToolsCommand {
     }
 
     @Override
-    public String getCommandUsage(ICommandSender icommandsender) {
-        return "/" + name;
+    public String getCommandUsage(ICommandSender sender) {
+        return "/" + getCommandName();
     }
 
     @Override
     public void processCommand(ICommandSender sender, String[] args) {
-
-        try {
-            BackupHandler.instance.doBackup();
-        } catch (IOException e) {
-            ServerToolsBackup.log.warn("Backup failed", e);
-            sender.addChatMessage(Util.getChatComponent("Backup Failed: " + e.getMessage(), EnumChatFormatting.RED));
-        }
-
-        sender.addChatMessage(Util.getChatComponent("Started Backup", EnumChatFormatting.GREEN));
+        BackupManager.getInstance().doBackup();
     }
 }
