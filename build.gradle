@@ -132,8 +132,8 @@ publishing {
     }
 
     repositories {
-        if (project.hasProperty('mavendir')) {
-            maven { url mavendir }
+        if (project.hasProperty('maven_url')) {
+            maven { url maven_url }
         }
     }
 }
@@ -143,7 +143,7 @@ curse {
     onlyIf { return project.hasProperty('curseforge_key') }
 
     if (project.hasProperty('curseforge_key')) apiKey = project.curseforge_key
-    projectId = '64744'
+    projectId = '220713'
     changelog = ''
     releaseType = 'release'
 }
