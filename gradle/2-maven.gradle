@@ -1,0 +1,61 @@
+apply plugin: 'maven-publish'
+
+publishing {
+    tasks.publish.dependsOn 'build'
+    publications {
+        mavenJava(MavenPublication) {
+            pom.withXml {
+                asNode().children().last() + {
+                    resolveStrategy = DELEGATE_FIRST
+                    name project.name
+                    description project.description
+                    url project.url
+                    inceptionYear project.inceptionYear
+                    packaging 'jar'
+                    scm {
+                        url project.scm_url
+                        connection project.scm_connection
+                        developerConnection project.scm_developerConnection
+                    }
+                    issueManagement {
+                        system project.issues_system
+                        url project.issues_url
+                    }
+                    licenses {
+                        license {
+                            name 'The Apache Software License, Version 2.0'
+                            url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                            distribution 'repo'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id 'matthewprenger'
+                            name 'Matthew Prenger'
+                            roles { role 'developer' }
+                        }
+                    }
+                }
+            }
+
+            from components.java
+            artifact sourceJar
+            artifact javadocJar
+            artifact deobfJar
+        }
+    }
+
+    repositories {
+        if (project.hasProperty('forgemaven_user') && project.hasProperty('forgemaven_password')) {
+            maven {
+                credentials {
+                    username project.forgemaven_user
+                    password project.forgemaven_password
+                }
+                url 'http://files.minecraftforge.net/maven/manage/upload'
+            }
+        } else {
+            maven { url "file://${project.projectDir}/repo" }
+        }
+    }
+}
