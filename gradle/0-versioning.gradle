@@ -1,0 +1,25 @@
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.ajoberstar:gradle-git:0.10.1'
+    }
+}
+
+def version_build = '0'
+if (System.getenv('BUILD_NUMBER') != null)
+    version_build = System.getenv('BUILD_NUMBER')
+
+version = "${minecraft_version}-${mod_version}.${version_build}"
+
+
+import org.ajoberstar.grgit.Grgit
+task genGitHash {
+    onlyIf {
+        return new File(projectDir, '.git').exists()
+    }
+
+    def repo = Grgit.open(project.file('.'))
+    project.ext.gitHash = repo.log().find().abbreviatedId
+}

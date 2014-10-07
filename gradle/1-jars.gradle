@@ -1,0 +1,34 @@
+task sourceJar(type: Jar, dependsOn: 'sourceMainJava') {
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+task javadocJar(type: Jar, dependsOn: 'javadoc') {
+    from javadoc.destinationDir
+    classifier = 'javadoc'
+}
+
+task deobfJar(type: Jar, dependsOn: 'classes') {
+    from sourceSets.main.output
+    classifier = 'deobf'
+}
+
+tasks.build.dependsOn sourceJar, javadocJar, deobfJar
+
+jar {
+    dependsOn 'genGitHash'
+    manifest.mainAttributes(
+            "Built-By": System.getProperty('user.name'),
+            "Created-By": "${System.getProperty('java.vm.version')} + (${System.getProperty('java.vm.vendor')})",
+            "Implementation-Title": project.name,
+            "Implementation-Version": project.version,
+            "Git-Hash": project.ext.gitHash,
+            "FMLAT": 'servertools_at.cfg'
+    )
+}
+
+tasks.withType(JavaCompile) { task ->
+    task.options.encoding = 'UTF-8'
+    task.sourceCompatibility = '1.7'
+    task.targetCompatibility = '1.7'
+}

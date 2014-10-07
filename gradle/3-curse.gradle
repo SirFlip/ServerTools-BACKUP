@@ -1,0 +1,32 @@
+buildscript {
+    repositories {
+        mavenCentral()
+        jcenter()
+        maven { url = "http://files.minecraftforge.net/maven" }
+        maven { url = "https://oss.sonatype.org/content/repositories/snapshots/" }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
+        classpath 'org.ajoberstar:gradle-git:0.10.1'
+        classpath 'nl.javadude.gradle.plugins:license-gradle-plugin:0.11.0'
+    }
+}
+
+apply plugin: 'curseforge'
+
+curse {
+    dependsOn 'reobf'
+    mustRunAfter 'publish'
+
+    onlyIf {
+        return project.hasProperty('curseforge_key') && project.hasProperty('curse_projectId')
+    }
+
+    if (project.hasProperty('curseforge_key')) {
+        apiKey = project.curseforge_key
+    }
+
+    projectId = project.curse_projectId
+    changelog = ''
+    releaseType = 'release'
+}

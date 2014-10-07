@@ -16,6 +16,7 @@
 package info.servertools.backup;
 
 import cpw.mods.fml.common.Mod;
+import cpw.mods.fml.common.event.FMLFingerprintViolationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import info.servertools.core.ServerTools;
 import info.servertools.core.command.CommandManager;
@@ -24,7 +25,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 
-@Mod(modid = ServerToolsBackup.MOD_ID, name = ServerToolsBackup.MOD_ID, dependencies = "required-after:ServerTools", acceptableRemoteVersions = "*")
+@Mod(modid = ServerToolsBackup.MOD_ID, name = ServerToolsBackup.MOD_ID, dependencies = "required-after:ServerTools", acceptableRemoteVersions = "*", certificateFingerprint = "@FINGERPRINT@")
 public class ServerToolsBackup {
 
     public static final String MOD_ID = "ServerTools-BACKUP";
@@ -33,6 +34,22 @@ public class ServerToolsBackup {
 
     static { //noinspection ResultOfMethodCallIgnored
         BACKUP_DIR.mkdirs();
+    }
+
+    @Mod.EventHandler
+    public void fingerprintViolation(FMLFingerprintViolationEvent event) {
+        LOG.warn("****************************************************");
+        LOG.warn("*      Invalid ST-BACKUP Fingerprint Detected      *");
+        LOG.warn("****************************************************");
+        LOG.warn("* Expected: " + event.expectedFingerprint);
+        LOG.warn("****************************************************");
+        LOG.warn("* Received: ");
+        for (String fingerprint : event.fingerprints) {
+            LOG.warn("*   " + fingerprint);
+        }
+        LOG.warn("****************************************************");
+        LOG.warn("*Unpredictable results may occur, please relownload*");
+        LOG.warn("****************************************************");
     }
 
     @Mod.EventHandler

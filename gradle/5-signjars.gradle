@@ -1,0 +1,36 @@
+task signJars {
+    mustRunAfter 'reobf'
+    def jars = [jar, javadocJar, sourceJar]
+    jars.each { signJars.dependsOn it }
+    tasks.build.dependsOn signJars
+
+    boolean canRun = project.hasProperty('st_keystore') &&
+            project.hasProperty('st_keystore_alias') &&
+            project.hasProperty('st_keystore_password')
+
+    if (canRun) {
+        inputs.dir jar.destinationDir
+        inputs.file st_keystore
+        inputs.property 'st_keystore_alias', st_keystore_alias
+        inputs.property 'st_keystore_password', st_keystore_password
+        outputs.dir jar.destinationDir
+    }
+
+    onlyIf {
+        return canRun
+    }
+
+    doLast {
+        jars.each {
+            logger.lifecycle "Signing $it.archivePath"
+
+            ant.signjar(
+                    destDir: it.archivePath.getParentFile(),
+                    jar: it.archivePath,
+                    keystore: st_keystore,
+                    alias: st_keystore_alias,
+                    storepass: st_keystore_password,
+            )
+        }
+    }
+}
