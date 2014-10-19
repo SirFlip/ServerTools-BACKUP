@@ -17,8 +17,8 @@ package info.servertools.backup;
 
 import info.servertools.core.command.CommandLevel;
 import info.servertools.core.command.ServerToolsCommand;
-import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommandSender;
+import net.minecraft.server.MinecraftServer;
 
 public class CommandBackup extends ServerToolsCommand {
 
@@ -28,7 +28,20 @@ public class CommandBackup extends ServerToolsCommand {
 
     @Override
     public CommandLevel getCommandLevel() {
-        return CommandLevel.OP;
+        if (MinecraftServer.getServer().isSinglePlayer())
+            return CommandLevel.ANYONE;
+        else
+            return CommandLevel.OP;
+    }
+
+    @Override
+    public boolean canCommandSenderUseCommand(ICommandSender sender) {
+        if (MinecraftServer.getServer().isSinglePlayer()
+                && MinecraftServer.getServer().getServerOwner().equals(sender.getCommandSenderName())) {
+            return true;
+        } else {
+            return super.canCommandSenderUseCommand(sender);
+        }
     }
 
     @Override
