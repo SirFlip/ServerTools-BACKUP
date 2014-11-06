@@ -15,11 +15,6 @@ version = "${minecraft_version}-${mod_version}.${version_build}"
 
 
 import org.ajoberstar.grgit.Grgit
-task genGitHash {
-    onlyIf {
-        return new File(projectDir, '.git').exists()
-    }
 
-    def repo = Grgit.open(project.file('.'))
-    project.ext.gitHash = repo.log().find().abbreviatedId
-}
+def repo = Grgit.open(project.file('.'))
+project.ext.gitHash = repo.log().find().abbreviatedId
