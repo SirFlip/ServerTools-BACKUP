@@ -1,12 +1,12 @@
 [
-{
-  "modid": "ServerTools-BACKUP",
-  "name": "ServerTools Backup",
-  "version": "${version}",
-  "description": "Backup addon for ServerTools",
-  "url": "http://servertools.info",
-  "authorList": ["matthewprenger"],
-  "credits": "Forge, FML, and MCP for making this project possible",
-  "dependencies": ["required-after:ServerTools"]
-}
+  {
+    "modid": "ServerTools-BACKUP",
+    "name": "ServerTools Backup",
+    "version": "${version}",
+    "description": "${description}",
+    "url": "${url}",
+    "authorList": ["matthewprenger"],
+    "credits": "Forge, FML, and MCP for making this project possible",
+    "dependencies": ["required-after:ServerTools"]
+  }
 ]

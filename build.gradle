@@ -1,9 +1,20 @@
+import org.ajoberstar.grgit.Grgit
+
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+
 buildscript {
     repositories {
         mavenCentral()
         jcenter()
-        maven { url = "http://files.minecraftforge.net/maven" }
-        maven { url = "https://oss.sonatype.org/content/repositories/snapshots/" }
+        maven {
+            name 'Forge'
+            url 'http://files.minecraftforge.net/maven'
+        }
+        maven {
+            name 'SonaType-Snapshots'
+            url 'https://oss.sonatype.org/content/repositories/snapshots/'
+        }
     }
     dependencies {
         classpath 'net.minecraftforge.gradle:ForgeGradle:1.2-SNAPSHOT'
@@ -13,19 +24,36 @@ buildscript {
 }
 
 apply plugin: 'forge'
+apply plugin: 'license'
+apply plugin: 'curseforge'
+apply plugin: 'license'
 
-fileTree('gradle').include('*.gradle').collect().sort().each { apply from: it }
+version = new ProjectVersion(
+        minecraft: '1.7.10',
+        forge: '10.13.2.1291',
+        mappings: 'stable_12',
+
+        stCore: "1.7.10-2.2.0.73",
+
+        major: '2',
+        minor: '2',
+        revision: '1'
+)
+
+apply from: 'gradle/maven.gradle'
+
+println "\n$name version: $version\n"
 
 sourceCompatibility = 1.7
 targetCompatibility = 1.7
 
 repositories {
     mavenCentral()
-    maven { url 'http://files.minecraftforge.net/maven'}
+    maven { url 'http://files.minecraftforge.net/maven' }
 }
 
 dependencies {
-    compile "info.servertools.core:ServerTools-CORE:${st_core_version}:deobf"
+    compile "info.servertools.core:ServerTools-CORE:$project.version.stCore:deobf"
 
     testCompile 'junit:junit:4.11'
     testCompile 'org.hamcrest:hamcrest-library:1.3'
@@ -33,32 +61,161 @@ dependencies {
 }
 
 minecraft {
-    version = minecraft_version + '-' + forge_version
+    version = "$project.version.minecraft-$project.version.forge"
+    mappings = project.version.mappings
     runDir = 'run'
-    mappings = project.mappings
 
-    replaceIn 'info/servertools/backup/ServerToolsBackup.java'
+    replaceIn 'info/servertools/core/Version.java'
 
-    if (project.hasProperty('st_keystore_fingerprint')) {
-        replace '@FINGERPRINT@', project.st_keystore_fingerprint
-    }
+    replace '@MAJOR@': project.version.major
+    replace '@MINOR@': project.version.minor
+    replace '@REV@': project.version.revision
+    replace '@BUILD@': project.version.build
 }
 
 processResources {
-    inputs.property "version", project.version
-    inputs.property "mcversion", minecraft_version
 
-    from 'LICENSE.txt'
+    from 'LICENSE'
 
     from(sourceSets.main.resources.srcDirs) {
         include '**/*.info'
         include '**/*.properties'
 
-        expand 'version': project.version, 'mcversion': minecraft_version
+        expand([
+                'version'    : project.version,
+                'mcversion'  : project.version.minecraft,
+                'url'        : project.url,
+                'description': project.description
+        ])
     }
 
     from(sourceSets.main.resources.srcDirs) {
         exclude '**/*.info'
         exclude '**/*.properties'
+    }
+}
+
+license {
+    ext.name = project.name
+    ext.organization = project.organization
+    ext.year = project.inceptionYear
+    ext.url = project.url
+    exclude '**/*.info'
+    exclude '**/*.properties'
+    exclude '**/*.cfg'
+    header = file('HEADER.txt')
+    sourceSets = project.sourceSets
+    ignoreFailures = false
+    strictCheck = true
+    mapping { java = 'SLASHSTAR_STYLE' }
+}
+
+
+
+DateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZZ")
+format.setTimeZone(TimeZone.getTimeZone("UTC"))
+
+def commonManifest = [
+        'Built-By'              : System.getProperty('user.name'),
+        'Built-At'              : format.format(new Date()),
+        'Created-By'            : "${System.getProperty('java.version')} (${System.getProperty('java.vendor')})",
+        'Implementation-Title'  : project.name,
+        'Implementation-Version': project.version,
+        'Version-Major'         : project.version.major,
+        'Version-Minor'         : project.version.minor,
+        'Version-Revision'      : project.version.revision,
+        'Version-Build'         : project.version.build,
+        'Git-Hash'              : project.version.gitHash,
+        'Minecraft-Version'     : project.version.minecraft,
+        'Forge-Version'         : project.version.forge
+]
+
+logger.info "Manifest:\n$commonManifest\n"
+
+jar {
+    manifest.mainAttributes(commonManifest)
+}
+
+task sourcesJar(type: Jar) {
+    manifest.mainAttributes(commonManifest)
+    from sourceSets.main.allSource
+    classifier = 'sources'
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    manifest.mainAttributes(commonManifest)
+    from javadoc.destinationDir
+    classifier = 'javadoc'
+}
+
+task deobfJar(type: Jar) {
+    manifest.mainAttributes(commonManifest)
+    from sourceSets.main.output
+    classifier = 'deobf'
+}
+
+task versionProperties << {
+    def infoFile = new File("$buildDir/resources/main/version.properties")
+    infoFile.getParentFile().mkdirs()
+    Properties props = new Properties()
+    props.setProperty('ServerTools-BACKUP.version', project.version.toString())
+    props.store(infoFile.newWriter(), null)
+}
+
+assemble.dependsOn sourcesJar, javadocJar, deobfJar
+processResources.dependsOn versionProperties
+
+tasks.withType(JavaCompile) { task ->
+    task.options.encoding = 'UTF-8'
+}
+
+artifacts {
+    archives jar
+    archives sourcesJar
+    archives javadocJar
+    archives deobfJar
+}
+
+curse {
+    dependsOn build
+    mustRunAfter uploadArchives
+    onlyIf { return project.hasProperty('curseforge_key') }
+    if (project.hasProperty('curseforge_key')) {
+        apiKey = project.curseforge_key
+    }
+
+    projectId = project.curse_projectId
+    changelog = project.hasProperty('changelog') ? project.changelog : ''
+    releaseType = project.hasProperty('releaseType') ? project.releaseType : 'alpha'
+
+    additionalArtifact sourcesJar, javadocJar, deobfJar
+}
+
+class ProjectVersion {
+
+    String forge, minecraft, mappings
+    String major, minor, revision
+    String build = System.getenv().BUILD_NUMBER != null ? System.getenv().BUILD_NUMBER : '0'
+
+    String gitHash = getGitHash()
+
+    String stCore
+
+    @Override
+    String toString() {
+        if (!'0'.equals(build)) {
+            return "$minecraft-$major.$minor.$revision.$build"
+        } else {
+            return "$minecraft-$major.$minor.$revision.$gitHash"
+        }
+    }
+
+    static String getGitHash() {
+        if (new File('.git').exists()) {
+            Grgit repo = Grgit.open('.')
+            return repo.log().find().abbreviatedId
+        } else {
+            return 'none'
+        }
     }
 }

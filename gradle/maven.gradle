@@ -1,0 +1,58 @@
+apply plugin: 'maven'
+
+uploadArchives {
+    dependsOn build
+    repositories.mavenDeployer {
+
+        if (project.hasProperty('forgemaven_user') && project.hasProperty('forgemaven_password')) {
+            repository(url: 'http://files.minecraftforge.net/maven/manage/upload') {
+                authentication(userName: project.forgemaven_user, password: project.forgemaven_password)
+            }
+        } else {
+            repository(url: 'file://localhost/' + project.file('repo').getAbsolutePath())
+        }
+
+        pom {
+            groupId = project.group
+            version = project.version
+            artifactId = project.archivesBaseName
+        }
+
+        pom.project {
+            name project.name
+            packaging 'jar'
+            description project.description
+            url project.url
+            inceptionYear project.inceptionYear
+
+            scm {
+                url project.scm_url
+                connection project.scm_connection
+                developerConnection project.scm_developerConnection
+            }
+
+            issueManagement {
+                system project.issues_system
+                url project.issues_url
+            }
+
+            licenses {
+                license {
+                    name 'Apache License Version 2.0'
+                    url 'http://www.apache.org/licenses/LICENSE-2.0'
+                    distribution 'repo'
+                }
+            }
+
+            developers {
+                developer {
+                    id 'matthewprenger'
+                    name 'Matthew Prenger'
+                    roles {
+                        role 'developer'
+                    }
+                }
+            }
+        }
+    }
+}
