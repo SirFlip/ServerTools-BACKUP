@@ -17,6 +17,8 @@ package info.servertools.backup;
 
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.util.Collections;
@@ -24,6 +26,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class BackupConfig {
+
+    private static final Logger log = LogManager.getLogger();
 
     public static String backupsPath = "backup";
 
@@ -49,10 +53,11 @@ public class BackupConfig {
         try {
             config = new Configuration(file);
         } catch (Exception e) {
-            ServerToolsBackup.LOG.fatal("Error loading configuration, deleting and retrying", e);
+            log.fatal("Error loading configuration, deleting and retrying", e);
 
-            if (file.exists())
+            if (file.exists()) {
                 file.delete();
+            }
 
             config = new Configuration(file);
         }
@@ -72,18 +77,18 @@ public class BackupConfig {
 
         prop = config.get(category, "daysToKeepBackups", lifespanDays);
         prop.comment = "The number of days that the backup will be kept for, " +
-                "Set -1 to disable";
-        lifespanDays = prop.getInt();
+                       "Set -1 to disable";
+        lifespanDays = clampInt(prop, -1, Integer.MAX_VALUE);
 
         prop = config.get(category, "maxBackupDirSize", maxFolderSize);
         prop.comment = "The maximum size of the backup directory in Megabytes, " +
-                "Set to -1 to disable";
-        maxFolderSize = prop.getInt();
+                       "Set to -1 to disable";
+        maxFolderSize = clampInt(prop, -1, Integer.MAX_VALUE);
 
         prop = config.get(category, "maxNumberBackups", maxNumberBackups);
         prop.comment = "The maximum number of backups that will be kept in the backup directory, " +
-                "Set to -1 to disable";
-        maxNumberBackups = prop.getInt(maxNumberBackups);
+                       "Set to -1 to disable";
+        maxNumberBackups = clampInt(prop, -1, Integer.MAX_VALUE);
 
         prop = config.get(category, "sendBackupMessageToOps", sendBackupMessageToOps);
         prop.comment = "Send backup related messages to server operators";
@@ -96,21 +101,24 @@ public class BackupConfig {
         prop = config.get(category, "backupMessageWhitelist", "");
         prop.comment = "A Comma separated list of users to always send backup related messages to";
         array = prop.getString().split(",");
-        if (array.length > 0)
+        if (array.length > 0) {
             Collections.addAll(backupMessageWhitelist, array);
+        }
 
         prop = config.get(category, "fileBlackList", "");
         prop.comment = "Comma separated list of files to not back up";
         array = prop.getString().split(",");
-        if (array.length > 0)
+        if (array.length > 0) {
             Collections.addAll(fileBlacklist, array);
+        }
         fileBlacklist.add("level.dat_new"); /* Minecraft Temp File - Causes Backup Problems */
 
         prop = config.get(category, "directoryBlackList", "");
         prop.comment = "Comma separated list of directory names to not back up";
         array = prop.getString().split(",");
-        if (array.length > 0)
+        if (array.length > 0) {
             Collections.addAll(directoryBlackList, array);
+        }
 
 
         /* AutoBackup Settings */
@@ -124,7 +132,22 @@ public class BackupConfig {
         prop.comment = "The interval in minutes for the auto backup to occur";
         autoBackupInterval = prop.getInt(autoBackupInterval);
 
-        if (config.hasChanged())
+        if (config.hasChanged()) {
             config.save();
+        }
+    }
+
+    private static int clampInt(final Property prop, final int min, final int max) {
+        final int intVal = prop.getInt();
+        if (intVal < min) {
+            log.warn("Property {} was set below the minimum of {}. Resetting to {}", prop.getName(), min, min);
+            prop.set(min);
+            return min;
+        } else if (intVal > max) {
+            log.warn("Property {} was set above the maximum of {}. Resetting to {}", prop.getName(), max, max);
+            prop.set(max);
+            return max;
+        }
+        return intVal;
     }
 }
