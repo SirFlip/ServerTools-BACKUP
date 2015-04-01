@@ -15,8 +15,11 @@
  */
 package info.servertools.backup;
 
-import com.google.common.base.Strings;
+import static info.servertools.backup.ServerToolsBackup.LOG;
+
 import info.servertools.core.util.ServerUtils;
+
+import com.google.common.base.Strings;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.ChatComponentText;
@@ -24,7 +27,6 @@ import net.minecraft.world.MinecraftException;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 
-import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -32,7 +34,7 @@ import java.util.Calendar;
 import java.util.HashMap;
 import java.util.Map;
 
-import static info.servertools.backup.ServerToolsBackup.LOG;
+import javax.annotation.Nullable;
 
 public class BackupManager {
 
@@ -53,6 +55,8 @@ public class BackupManager {
         }
         worldDirectory = DimensionManager.getWorld(0).getChunkSaveLocation();
         backupDirectory = new File(BackupConfig.backupsPath);
+
+        LOG.trace("Backup directory is at {}", backupDirectory.getAbsolutePath());
 
         if (backupDirectory.exists() && !backupDirectory.isDirectory()) {
             throw new RuntimeException("A file exists with the same name as the configured backup directory");
@@ -92,8 +96,7 @@ public class BackupManager {
     /**
      * Send a messsage to users who are configured to receive backup related messages
      *
-     * @param message
-     *         the message
+     * @param message the message
      */
     public void sendMessage(@Nullable Object message) {
         ChatComponentText text = new ChatComponentText(String.valueOf(message));
@@ -113,6 +116,7 @@ public class BackupManager {
         for (final WorldServer worldServer : MinecraftServer.getServer().worldServers) {
             try {
                 worldServer.saveAllChunks(true, null);
+                LOG.trace("Saved world: {}", worldServer.provider.dimensionId);
             } catch (MinecraftException e) {
                 LOG.warn("Failed to save all chunk data to disk", e);
             }
@@ -124,6 +128,7 @@ public class BackupManager {
         for (final WorldServer worldServer : MinecraftServer.getServer().worldServers) {
             worldSavingCache.put(worldServer.provider.dimensionId, worldServer.disableLevelSaving);
             worldServer.disableLevelSaving = true;
+            LOG.trace("Disabled saving of world: {}", worldServer.provider.dimensionId);
         }
     }
 
@@ -132,6 +137,7 @@ public class BackupManager {
         for (final WorldServer worldServer : MinecraftServer.getServer().worldServers) {
             if (worldSavingCache.containsKey(worldServer.provider.dimensionId)) {
                 worldServer.disableLevelSaving = worldSavingCache.get(worldServer.provider.dimensionId);
+                LOG.trace("Resetting world saving disable flag of world: {} to {}", worldServer.provider.dimensionId, worldServer.disableLevelSaving);
             }
         }
     }

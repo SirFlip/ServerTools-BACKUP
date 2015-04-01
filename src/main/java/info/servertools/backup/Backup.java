@@ -45,11 +45,11 @@ class Backup {
 
     public void run() throws IOException {
         synchronized (LOCK) {
-            LOG.info("Starting backup {}", fileName);
+            final File backupFile = new File(backupDir, fileName);
+            LOG.info("Starting backup {}", backupFile.getAbsolutePath());
             BackupManager.getInstance().sendMessage("Starting Server Backup");
             long start = System.currentTimeMillis();
 
-            final File backupFile = new File(backupDir, fileName);
             final File dataFile = new File(sourceDir, "backupdata.json");
 
             GsonUtils.writeToFile(new DataFile(), dataFile, ServerToolsBackup.LOG, true);
