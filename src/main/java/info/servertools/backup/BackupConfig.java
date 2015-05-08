@@ -15,12 +15,15 @@
  */
 package info.servertools.backup;
 
+import static info.servertools.backup.ServerToolsBackup.LOG;
+
 import net.minecraftforge.common.config.Configuration;
 import net.minecraftforge.common.config.Property;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -30,6 +33,8 @@ public class BackupConfig {
     private static final Logger log = LogManager.getLogger();
 
     public static String backupsPath = "backup";
+    private static final String defaultDateFormat ="YYYY-MM-dd_HH-mm-ss";
+    public static SimpleDateFormat dateFormat = new SimpleDateFormat(defaultDateFormat);
 
     public static int lifespanDays = -1;
     public static int maxFolderSize = -1;
@@ -74,6 +79,17 @@ public class BackupConfig {
         prop = config.get(category, "backupDir", backupsPath);
         prop.comment = "This is the root location where backups will be stored";
         backupsPath = prop.getString();
+
+
+        prop = config.get(category, "backupDateFormat", defaultDateFormat);
+        prop.comment = "Change the date formate to your wish. Default: "+defaultDateFormat;
+        String tmp =prop.getString();
+        try {
+            dateFormat = new SimpleDateFormat(tmp);
+        } catch (Exception e) {
+            LOG.error("Unkowen date sequence '"+tmp+".'! Using: "+defaultDateFormat,e);
+            dateFormat = new SimpleDateFormat(defaultDateFormat);
+        }
 
         prop = config.get(category, "daysToKeepBackups", lifespanDays);
         prop.comment = "The number of days that the backup will be kept for, " +

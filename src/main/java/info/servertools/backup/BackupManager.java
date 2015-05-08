@@ -43,8 +43,6 @@ public class BackupManager {
     private final File worldDirectory;
     private final File backupDirectory;
 
-    private static final SimpleDateFormat dateFormat = new SimpleDateFormat("MM-dd-YYYY_HH-mm-ss");
-
     private static final Map<Integer, Boolean> worldSavingCache = new HashMap<>(MinecraftServer.getServer().worldServers.length);
 
     private BackupManager() {
@@ -90,7 +88,7 @@ public class BackupManager {
      * @return the backup filename
      */
     String getBackupName() {
-        return dateFormat.format(Calendar.getInstance().getTime()) + ".zip";
+        return BackupConfig.dateFormat.format(Calendar.getInstance().getTime()) + ".zip";
     }
 
     /**
