@@ -15,6 +15,7 @@ run
 .idea
 out
 *.iml
+*.ipr
 
 #Other stuff
 repo
