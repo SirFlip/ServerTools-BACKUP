@@ -45,21 +45,25 @@ class Backup {
 
     public void run() throws IOException {
         synchronized (LOCK) {
-            final File backupFile = new File(backupDir, fileName);
-            LOG.info("Starting backup {}", backupFile.getAbsolutePath());
+            final File backupFileTmp = new File(backupDir, "tmp");
+            LOG.info("Starting backup {}", backupFileTmp.getAbsolutePath());
             BackupManager.getInstance().sendMessage("Starting Server Backup");
             long start = System.currentTimeMillis();
 
             final File dataFile = new File(sourceDir, "backupdata.json");
 
             GsonUtils.writeToFile(new DataFile(), dataFile, ServerToolsBackup.LOG, true);
-            FileUtils.zipDirectory(sourceDir, backupFile, BackupConfig.fileBlacklist, BackupConfig.directoryBlackList);
+            FileUtils.zipDirectory(sourceDir, backupFileTmp, BackupConfig.fileBlacklist, BackupConfig.directoryBlackList);
             dataFile.delete();
             BackupManager.unlockSaving();
 
             long duration = (System.currentTimeMillis() - start) / 1000;
             LOG.info("Backup completed in {} seconds", duration);
             BackupManager.getInstance().sendMessage("Backup finished after " + duration + " seconds");
+
+            final File backupFile = new File(backupDir, fileName);
+            LOG.info("Rename backup {}", backupFile.getAbsolutePath());
+            backupFileTmp.renameTo(backupFile);
 
             BackupCleanup.run(backupDir);
         }
