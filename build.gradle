@@ -54,6 +54,7 @@ repositories {
 
 dependencies {
     compile "info.servertools.core:ServerTools-CORE:$project.version.stCore:deobf"
+    compile group: 'commons-net', name: 'commons-net', version: '3.3'
 
     testCompile 'junit:junit:4.11'
     testCompile 'org.hamcrest:hamcrest-library:1.3'

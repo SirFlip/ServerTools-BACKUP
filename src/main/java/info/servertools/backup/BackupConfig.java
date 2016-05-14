@@ -52,6 +52,13 @@ public class BackupConfig {
     public static boolean enableAutoBackup = false;
     public static int autoBackupInterval = 1440;
 
+    public static boolean enableFtpUpload = false;
+    public static String ftpServer = "ftp.myserver.com";
+    public static int ftpPort = 21;
+    public static String ftpUser = "user";
+    public static String ftpPass = "pass";
+    public static String ftpDir = "/";
+
     @SuppressWarnings("ResultOfMethodCallIgnored")
     public static void init(File file) {
 
@@ -142,7 +149,6 @@ public class BackupConfig {
             Collections.addAll(directoryBlackList, array);
         }
 
-
         /* AutoBackup Settings */
         category = "autoBackup";
 
@@ -153,6 +159,34 @@ public class BackupConfig {
         prop = config.get(category, "autoBackupInterval", autoBackupInterval);
         prop.comment = "The interval in minutes for the auto backup to occur";
         autoBackupInterval = prop.getInt(autoBackupInterval);
+
+
+        /* Remote FTP Upload Settings */
+        category = "ftpUpload";
+
+        prop = config.get(category, "enableFtpUpload", enableFtpUpload);
+        prop.comment = "Enable backups upload to FTP server";
+        enableFtpUpload = prop.getBoolean(enableFtpUpload);
+
+        prop = config.get(category, "ftpServer", ftpServer);
+        prop.comment = "This is the address of the FTP-Server";
+        ftpServer = prop.getString();
+
+        prop = config.get(category, "autoBackupInterval", ftpPort);
+        prop.comment = "The FTP-Server port Default: 21";
+        ftpPort = prop.getInt(ftpPort);
+
+        prop = config.get(category, "ftpUser", ftpUser);
+        prop.comment = "The FTP username";
+        ftpUser = prop.getString();
+
+        prop = config.get(category, "ftpPass", ftpPass);
+        prop.comment = "The FTP password";
+        ftpPass = prop.getString();
+
+        prop = config.get(category, "ftpDir", ftpDir);
+        prop.comment = "The FTP upload directory eg: \"/dir1/lol/foo\" Default: \"/\" Important: Start with /";
+        ftpDir = prop.getString();
 
         if (config.hasChanged()) {
             config.save();
