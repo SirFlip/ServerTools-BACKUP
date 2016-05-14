@@ -36,6 +36,8 @@ public class BackupConfig {
     private static final String defaultDateFormat ="YYYY-MM-dd_HH-mm-ss";
     public static SimpleDateFormat dateFormat = new SimpleDateFormat(defaultDateFormat);
 
+    public static String fileEnding = "zip";
+
     public static int lifespanDays = -1;
     public static int maxFolderSize = -1;
     public static int maxNumberBackups = -1;
@@ -80,6 +82,10 @@ public class BackupConfig {
         prop.comment = "This is the root location where backups will be stored";
         backupsPath = prop.getString();
 
+        prop = config.get(category, "customFileEnding", fileEnding);
+        prop.comment = "The file ending used for the backupfiles. They stay to be ZIPs it's only the ending." + Configuration.NEW_LINE +
+                       "WARNING: Does not effect existing backups. eg: the old Files wont be converted or be deleted.";
+        fileEnding = prop.getString();
 
         prop = config.get(category, "backupDateFormat", defaultDateFormat);
         prop.comment = "Change the date formate to your wish. Default: "+defaultDateFormat;

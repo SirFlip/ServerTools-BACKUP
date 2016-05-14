@@ -88,7 +88,7 @@ public class BackupManager {
      * @return the backup filename
      */
     String getBackupName() {
-        return BackupConfig.dateFormat.format(Calendar.getInstance().getTime()) + ".zip";
+        return BackupConfig.dateFormat.format(Calendar.getInstance().getTime()) + "." + BackupConfig.fileEnding;
     }
 
     /**
