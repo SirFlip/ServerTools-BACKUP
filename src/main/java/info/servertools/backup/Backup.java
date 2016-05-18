@@ -58,8 +58,9 @@ class Backup {
             BackupManager.unlockSaving();
 
             long duration = (System.currentTimeMillis() - start) / 1000;
-            LOG.info("Backup completed in {} seconds", duration);
-            BackupManager.getInstance().sendMessage("Backup finished after " + duration + " seconds");
+            String sizeData = "(" + FileUtil.getSizeS(backupFileTmp) + " / " + FileUtil.getSizeS(backupDir) + ")";
+            LOG.info("Backup completed in {} seconds {}", duration, sizeData);
+            BackupManager.getInstance().sendMessage("Backup finished after " + duration + " seconds " + sizeData);
 
             final File backupFile = new File(backupDir, fileName);
             LOG.info("Rename backup {}", backupFile.getAbsolutePath());
