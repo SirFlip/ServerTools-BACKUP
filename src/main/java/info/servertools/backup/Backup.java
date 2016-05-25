@@ -17,6 +17,7 @@ package info.servertools.backup;
 
 import info.servertools.core.util.FileUtils;
 import info.servertools.core.util.GsonUtils;
+import net.minecraft.util.EnumChatFormatting;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -28,6 +29,7 @@ import static info.servertools.backup.ServerToolsBackup.LOG;
 class Backup {
 
     private static final Object LOCK = new Object(); // Only run one backup at a time
+    private static boolean bLOCK = false;
 
     private final File sourceDir;
     private final File backupDir;
@@ -44,7 +46,14 @@ class Backup {
     }
 
     public void run() throws IOException {
+        if (bLOCK){
+            LOG.error("BACKUP ALREADY GOING!!! should not happen");
+            BackupManager.getInstance().sendMessage(EnumChatFormatting.RED.toString()+EnumChatFormatting.BOLD.toString()+
+                    "ERROR ON BACKUP!!! PLEASE CONTACT ADMIN!!!");
+        }
+
         synchronized (LOCK) {
+            bLOCK = true;
             final File backupFileTmp = new File(backupDir, "tmp");
             LOG.info("Starting backup {}", backupFileTmp.getAbsolutePath());
             BackupManager.getInstance().sendMessage("Starting Server Backup");
@@ -71,6 +80,7 @@ class Backup {
             }
 
             BackupCleanup.run(backupDir);
+            bLOCK = false;
         }
     }
 
