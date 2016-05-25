@@ -17,9 +17,11 @@ package info.servertools.backup;
 
 import cpw.mods.fml.common.Mod;
 import cpw.mods.fml.common.event.FMLFingerprintViolationEvent;
+import cpw.mods.fml.common.event.FMLServerStartedEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import info.servertools.core.ServerTools;
 import info.servertools.core.command.CommandManager;
+import net.minecraft.server.MinecraftServer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -45,4 +47,10 @@ public class ServerToolsBackup {
 
         CommandManager.registerSTCommand(new CommandBackup("backup"));
     }
+
+    @Mod.EventHandler
+    public void serverStarted(FMLServerStartedEvent event){
+        MinecraftServer.getServer().getCommandManager().executeCommand(MinecraftServer.getServer(),"say Server STARTED");
+    }
+
 }
