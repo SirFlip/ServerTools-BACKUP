@@ -66,7 +66,9 @@ class Backup {
             LOG.info("Rename backup {}", backupFile.getAbsolutePath());
             backupFileTmp.renameTo(backupFile);
 
-            if (BackupConfig.enableFtpUpload) new UploadFTP(backupFile);
+            if (BackupConfig.enableFtpUpload){
+                (new UploadFTP(backupFile)).start();
+            }
 
             BackupCleanup.run(backupDir);
         }

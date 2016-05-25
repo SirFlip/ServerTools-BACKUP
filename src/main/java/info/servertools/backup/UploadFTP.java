@@ -25,11 +25,16 @@ import java.io.InputStream;
 
 import static info.servertools.backup.ServerToolsBackup.LOG;
 
-public class UploadFTP {
+public class UploadFTP extends Thread{
 
+    private File backupFile;
 
     public UploadFTP(File backupFile){
+        this.backupFile = backupFile;
+    }
 
+    @Override
+    public void run(){
         FTPClient ftpClient = new FTPClient();
         try {
             long start = System.currentTimeMillis();
